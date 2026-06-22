@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center" style="min-height:70vh;">
+    <div class="col-lg-5 col-md-7 col-11">
+        <div class="glass pulse-glow">
+            <div class="text-center mb-4">
+                <i class="fas fa-gamepad" style="font-size:3rem;color:#00e5ff;"></i>
+                <h2 class="fw-bold neon-cyan">Welcome Back</h2>
+            </div>
+            <form action="/login" method="post">
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" class="form-control form-control-neon" required/>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <div class="input-group">
+                        <input type="password" name="password" id="loginPass" class="form-control form-control-neon" required/>
+                        <button class="btn btn-outline-secondary border-0" type="button" onclick="togglePass('loginPass')" style="background:rgba(20,28,40,0.7);">
+                            <i class="fas fa-eye" style="color:#6a8aaa;"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-neon w-100">Login</button>
+            </form>
+            <p class="text-center mt-3 text-secondary">No account? <a href="/register" class="neon-cyan">Register</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
