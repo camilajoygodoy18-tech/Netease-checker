@@ -30,9 +30,19 @@ def admin_required(f):
 # ------------------ ROUTES ------------------
 @app.route('/')
 def index():
-    return render_template('index.html', stats=stats, results=results_db[-20:],
+    # Kunin ang username mula sa session
+    username = session.get('username')
+    
+    # Kunin ang API key kung naka-login ang user
+    api_key = ''
+    if username and username in users_db:
+        api_key = users_db[username].api_key  # fixed: use .api_key attribute
+    
+    return render_template('index.html',
+                           stats=stats,
+                           results=results_db[-20:],
                            proxies='\n'.join(proxies_list) if proxies_list else '',
-                           api_key=users_db.get(session.get('username', {}), {}).get('api_key', ''))
+                           api_key=api_key)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -122,7 +132,10 @@ def generate_api():
 @app.route('/api')
 @login_required
 def api_page():
-    api_key = users_db.get(session['username'], {}).get('api_key', '')
+    username = session.get('username')
+    api_key = ''
+    if username and username in users_db:
+        api_key = users_db[username].api_key
     return render_template('api.html', api_key=api_key)
 
 @app.route('/download/<type>')
@@ -141,7 +154,7 @@ def download(type):
     return app.response_class(content, mimetype='text/plain',
                               headers={'Content-Disposition': f'attachment;filename={filename}'})
 
-# ------------------ API ENDPOINT ------------------
+# ------------------ API ENDPOINT (external) ------------------
 @app.route('/api/check', methods=['POST'])
 def api_check():
     from flask import request, jsonify
@@ -164,6 +177,15 @@ def api_check():
     email, password = account.split(':', 1)
     status, detail = netease_check(email, password, proxies_list)
     return jsonify({'status': status, 'detail': detail, 'account': account})
+
+# ------------------ CREATE DEFAULT ADMIN (if not exists) ------------------
+def create_default_admin():
+    from models import User
+    if 'admin' not in users_db:
+        users_db['admin'] = User('admin', 'admin@example.com', 'admin123', role='admin')
+
+# Run this when the app starts
+create_default_admin()
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
