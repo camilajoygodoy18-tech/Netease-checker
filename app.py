@@ -30,14 +30,10 @@ def admin_required(f):
 # ------------------ ROUTES ------------------
 @app.route('/')
 def index():
-    # Kunin ang username mula sa session
     username = session.get('username')
-    
-    # Kunin ang API key kung naka-login ang user
     api_key = ''
     if username and username in users_db:
-        api_key = users_db[username].api_key  # fixed: use .api_key attribute
-    
+        api_key = users_db[username].api_key
     return render_template('index.html',
                            stats=stats,
                            results=results_db[-20:],
@@ -138,13 +134,23 @@ def api_page():
         api_key = users_db[username].api_key
     return render_template('api.html', api_key=api_key)
 
+# ------------------ DOWNLOAD ROUTES (UPDATED) ------------------
 @app.route('/download/<type>')
 @login_required
 def download(type):
     if type == 'success':
         lines = [r['account'] for r in results_db if r['status'] == 'success']
         filename = 'success.txt'
-    else:
+    elif type == 'invalid':
+        lines = [r['account'] for r in results_db if r['status'] == 'invalid']
+        filename = 'invalid.txt'
+    elif type == 'failed':
+        lines = [r['account'] for r in results_db if r['status'] == 'failed']
+        filename = 'failed.txt'
+    elif type == 'errors':
+        lines = [f"{r['account']} | {r['detail']}" for r in results_db if r['status'] == 'error']
+        filename = 'errors.txt'
+    else:  # all
         lines = [f"{r['account']} | {r['status']} | {r['detail']}" for r in results_db]
         filename = 'all_results.txt'
     if not lines:
@@ -178,13 +184,12 @@ def api_check():
     status, detail = netease_check(email, password, proxies_list)
     return jsonify({'status': status, 'detail': detail, 'account': account})
 
-# ------------------ CREATE DEFAULT ADMIN (if not exists) ------------------
+# ------------------ CREATE DEFAULT ADMIN ------------------
 def create_default_admin():
     from models import User
     if 'admin' not in users_db:
         users_db['admin'] = User('admin', 'admin@example.com', 'admin123', role='admin')
 
-# Run this when the app starts
 create_default_admin()
 
 if __name__ == '__main__':
